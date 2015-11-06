@@ -2,7 +2,7 @@ CC=g++
 
 CFLAGS=-c -std=c++0x -O3 -Wall
 LDFLAGS=-lGLEW -lGL -lglut -lXi -L/usr/X11R6/lib
-SOURCES=main.cpp OpenGLTools/ShaderTools.cpp OpenGLTools/RenderingTools.cpp MathTools/Mat4f.cpp MathTools/OpenGLMatrixTools.cpp MathTools/Vec3f.cpp MathTools/VectorTools.cpp SceneObjects/Renderable.cpp Helpers/FileHelper.cpp
+SOURCES=main.cpp OpenGLTools/ShaderTools.cpp OpenGLTools/RenderingTools.cpp MathTools/Mat4f.cpp MathTools/OpenGLMatrixTools.cpp MathTools/Vec3f.cpp MathTools/VectorTools.cpp SceneObjects/PointMass.cpp SceneObjects/Spring.cpp SceneObjects/MassSpringSystem.cpp SceneObjects/Renderable.cpp Helpers/FileHelper.cpp
 OBJECTS=$(SOURCES:.cpp=.o)
 BIN=bin/
 OBJ=$(BIN)obj/
