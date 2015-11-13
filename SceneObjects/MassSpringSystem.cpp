@@ -16,6 +16,30 @@ MassSpringSystem::~MassSpringSystem() {
 	// TODO Auto-generated destructor stub
 }
 
+MassSpringSystem::MassSpringSystem(SpringSystem type)
+{
+	this->setRenderMode(GL_LINE_STRIP);
+	this->setFragmentShaderPath("Shaders/basic_fs.glsl");
+	this->setVertexShaderPath("Shaders/basic_vs.glsl");
+	this->setColour(Vec3f(1,1,1));
+
+	switch(type)
+	{
+	case Oscillator:
+		createOscillator();
+		break;
+	case Rope:
+		createRope();
+		break;
+	case Jello:
+		createJello();
+		break;
+	case Cloth:
+		createCloth();
+		break;
+	}
+}
+
 void MassSpringSystem::update()
 {
 	// Accumulating spring forces
@@ -88,4 +112,53 @@ void MassSpringSystem::add(PointMass newMass, Spring spring)
 	newVerts.push_back(newMass.getPosition());
 
 	this->setVerts(newVerts);
+}
+
+void MassSpringSystem::createOscillator()
+{
+	PointMass first, second;
+	first.setMass(1);
+	first.setPosition(Vec3f(0,0,0));
+	second.setMass(1);
+	second.setPosition(Vec3f(0,-1,0));
+
+	Spring spring;
+	spring.setK(20);
+	spring.setRestLength(1);
+
+	add(first, second, spring);
+}
+
+void MassSpringSystem::createRope()
+{
+	PointMass first, second;
+	first.setMass(1);
+	first.setPosition(Vec3f(0,0,0));
+	second.setMass(1);
+	second.setPosition(Vec3f(0.1,0,0));
+
+	Spring spring;
+	spring.setK(200);
+	spring.setRestLength(1);
+
+	add(first, second, spring);
+
+	for(int i = 0; i < 10; i++)
+	{
+		PointMass currentMass;
+		currentMass.setMass(1);
+		currentMass.setPosition(Vec3f(0.2 + i*0.1, 0, 0));
+
+		add(currentMass, spring);
+	}
+}
+
+void MassSpringSystem::createJello()
+{
+
+}
+
+void MassSpringSystem::createCloth()
+{
+
 }

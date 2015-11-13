@@ -14,7 +14,16 @@
 
 class MassSpringSystem : public Renderable {
 public:
+	enum SpringSystem
+		{
+			Oscillator,
+			Rope,
+			Jello,
+			Cloth
+		};
+
 	MassSpringSystem();
+	MassSpringSystem(SpringSystem);
 	virtual ~MassSpringSystem();
 	void update();
 	void add(PointMass, PointMass, Spring);
@@ -24,6 +33,11 @@ public:
 	static constexpr float G = -9.81;
 	std::vector<PointMass> masses;
 private:
+	void createOscillator();
+	void createRope();
+	void createJello();
+	void createCloth();
+
 
 	std::vector<Spring> springs;
 };

@@ -32,7 +32,8 @@ using std::cout;
 using std::endl;
 using std::cerr;
 
-MassSpringSystem oscillator, chain, jello, cloth;
+MassSpringSystem oscillator(MassSpringSystem::Oscillator), rope(MassSpringSystem::Rope), jello(MassSpringSystem::Jello), cloth(MassSpringSystem::Cloth);
+MassSpringSystem * currentlyRendering;
 Mat4f MVP;
 Mat4f M; // Every model should have it's own Model matrix
 Mat4f V;
@@ -85,8 +86,6 @@ void displayFunc()
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 
-	RenderingTools::loadBuffer(test);
-
 	// Render all objects!
 	//TODO: move this into renderable as an overridable
 	//		function so each child can render differently
@@ -94,6 +93,7 @@ void displayFunc()
 	for(unsigned int i = 0; i < toRender.size(); i++)
 	{
 		Renderable & current = *toRender.at(i);
+		RenderingTools::loadBuffer(current);
 
 		// Use our shader
 		glUseProgram( current.basicProgramID );
@@ -113,7 +113,7 @@ void displayFunc()
 void idleFunc()
 {
 	for(int i = 0 ; i < 10; i++)
-		test.update();
+		currentlyRendering->update();
 
 	glutPostRedisplay();
 }
@@ -151,7 +151,7 @@ void loadModelViewMatrix()
 {
     M = UniformScaleMatrix( 0.25 );	// scale Scene First
 
-    M = TranslateMatrix( 0, 0, -3 ) * M;	// translate away from (0,0,0)
+    M = TranslateMatrix( 0, 0, -2 ) * M;	// translate away from (0,0,0)
 
     // view doesn't change, but if it did you would use this
     V = IdentityMatrix();
@@ -171,32 +171,9 @@ void init()
 {
 	glEnable( GL_DEPTH_TEST );
 
+	currentlyRendering = &oscillator;
 
-	test.setColour(Vec3f(1.,1.,1.));
-	test.setFragmentShaderPath("Shaders/basic_fs.glsl");
-	test.setRenderMode(GL_LINE_STRIP);
-	test.setVertexShaderPath("Shaders/basic_vs.glsl");
-
-	PointMass first, second;
-	first.setMass(1);
-	first.setPosition(Vec3f(0,0,0));
-	second.setMass(1);
-	second.setPosition(Vec3f(0.1,0.,0.));
-	Spring spring;
-	spring.setK(200);
-	spring.setRestLength(0.1);
-
-	test.add(first, second, spring);
-
-	for(int i = 0; i < 10; i++)
-	{
-		PointMass newMass;
-		newMass.setMass(1);
-		newMass.setPosition(Vec3f(0.2 + 0.1*i, 0.0, 0.0));
-		test.add(newMass, spring);
-	}
-
-	toRender.push_back(&test);
+	toRender.push_back(currentlyRendering);
 
 	// SETUP SHADERS, BUFFERS, VAOs
 
@@ -217,6 +194,15 @@ void init()
 
 void menu(int choice)
 {
+	switch(choice)
+	{
+	case 0:
+		currentlyRendering = &oscillator;
+		break;
+	case 1:
+		//currentlyRendering = &rope;
+		break;
+	}
 
 }
 
@@ -248,6 +234,8 @@ int main( int argc, char** argv )
     glutMotionFunc( mouseMotionFunc);
 
     glutCreateMenu(menu);
+    glutAddMenuEntry("Render Oscillator",0);
+    glutAddMenuEntry("Render Rope",1);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 	init(); // our own initialize stuff func

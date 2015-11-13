@@ -24,7 +24,7 @@ GLuint CreateShaderProgram(	const std::string & vsSource,
 		glDeleteShader( vsID );
 		glDeleteShader( fsID );
 
-		std::cerr << "Cannot create Shaders or Program" << std::endl;
+		std::cerr << "Cannot create Shaders or Program:" << std::endl;
 		return 0; // invalid ID
 	}
 
