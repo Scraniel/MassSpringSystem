@@ -47,3 +47,20 @@ Vec3f PointMass::getVelocity() const {
 void PointMass::setVelocity(Vec3f velocity) {
 	this->velocity = velocity;
 }
+
+void PointMass::addForce(Vec3f force)
+{
+	this->currentForces = this->currentForces + force;
+}
+
+void PointMass::clearForces()
+{
+	this->currentForces.x(0);
+	this->currentForces.y(0);
+	this->currentForces.z(0);
+}
+
+void PointMass::addVelocity(Vec3f velocity)
+{
+	this->velocity = this->velocity + velocity;
+}

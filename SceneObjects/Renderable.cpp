@@ -102,3 +102,15 @@ void Renderable::deleteIDs()
 	glDeleteBuffers( 1, &vertBufferID );
 	glDeleteBuffers( 1, &colorBufferID );
 }
+
+void Renderable::setVert(int index, Vec3f newVert)
+{
+	if(index >= verts.size())
+	{
+		std::cerr << "ERROR: Index " << index << " outside of range. Cannot update vertex.";
+		return;
+	}
+
+	verts.at(index) = newVert;
+
+}

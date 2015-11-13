@@ -26,12 +26,13 @@
 #include "OpenGLTools/ShaderTools.h"
 #include "OpenGLTools/RenderingTools.h"
 #include "SceneObjects/Renderable.h"
+#include "SceneObjects/MassSpringSystem.h"
 
 using std::cout;
 using std::endl;
 using std::cerr;
 
-Renderable test;
+MassSpringSystem oscillator, chain, jello, cloth;
 Mat4f MVP;
 Mat4f M; // Every model should have it's own Model matrix
 Mat4f V;
@@ -83,6 +84,9 @@ void displayFunc()
 {
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+
+	RenderingTools::loadBuffer(test);
+
 	// Render all objects!
 	//TODO: move this into renderable as an overridable
 	//		function so each child can render differently
@@ -99,14 +103,19 @@ void displayFunc()
 		glBindVertexArray( current.vaoID );
 		// Draw line segments, start at vertex 0, draw all verts in the object
 		glDrawArrays( current.getRenderMode(), 0, current.getVerts().size() );
+
 	}
 
 	glutSwapBuffers();
 }
 
+
 void idleFunc()
 {
-	
+	for(int i = 0 ; i < 10; i++)
+		test.update();
+
+	glutPostRedisplay();
 }
 
 void resizeFunc( int width, int height )
@@ -165,9 +174,28 @@ void init()
 
 	test.setColour(Vec3f(1.,1.,1.));
 	test.setFragmentShaderPath("Shaders/basic_fs.glsl");
-	test.setRenderMode(GL_TRIANGLES);
+	test.setRenderMode(GL_LINE_STRIP);
 	test.setVertexShaderPath("Shaders/basic_vs.glsl");
-	test.setVerts(std::vector<Vec3f>({Vec3f(0.,0.,0.), Vec3f(0.,1.,0.), Vec3f(1.,1.,0.)}));
+
+	PointMass first, second;
+	first.setMass(1);
+	first.setPosition(Vec3f(0,0,0));
+	second.setMass(1);
+	second.setPosition(Vec3f(0.1,0.,0.));
+	Spring spring;
+	spring.setK(200);
+	spring.setRestLength(0.1);
+
+	test.add(first, second, spring);
+
+	for(int i = 0; i < 10; i++)
+	{
+		PointMass newMass;
+		newMass.setMass(1);
+		newMass.setPosition(Vec3f(0.2 + 0.1*i, 0.0, 0.0));
+		test.add(newMass, spring);
+	}
+
 	toRender.push_back(&test);
 
 	// SETUP SHADERS, BUFFERS, VAOs

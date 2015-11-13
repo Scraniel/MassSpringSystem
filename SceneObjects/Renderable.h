@@ -21,6 +21,7 @@ public:
 	virtual ~Renderable();
 	std::vector<Vec3f> getVerts();
 	virtual void setVerts(std::vector<Vec3f>);
+	void setVert(int, Vec3f);
 	virtual std::vector<float> getColours();
 	Vec3f getColour();
 	void setColour(Vec3f);

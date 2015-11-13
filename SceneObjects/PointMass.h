@@ -23,6 +23,9 @@ public:
 	void setPosition(Vec3f);
 	Vec3f getVelocity() const;
 	void setVelocity(Vec3f);
+	void addForce(Vec3f);
+	void clearForces();
+	void addVelocity(Vec3f);
 
 private:
 	Vec3f position, velocity, currentForces;

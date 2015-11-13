@@ -16,9 +16,15 @@ class MassSpringSystem : public Renderable {
 public:
 	MassSpringSystem();
 	virtual ~MassSpringSystem();
-
-private:
+	void update();
+	void add(PointMass, PointMass, Spring);
+	void add(PointMass, Spring);
+	static constexpr float DAMPING_FORCE_CONST = 5;
+	static constexpr float DELTA_T = 0.001;
+	static constexpr float G = -9.81;
 	std::vector<PointMass> masses;
+private:
+
 	std::vector<Spring> springs;
 };
 
