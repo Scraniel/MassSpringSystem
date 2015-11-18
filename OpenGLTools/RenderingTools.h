@@ -18,6 +18,7 @@ public:
 	static void reloadMVPUniform(Renderable&);
 	static void setupVAO(Renderable&);
 	static void loadBuffer(Renderable&);
+	static void loadIndexBuffer(Renderable&);
 };
 
 #endif /* OPENGLTOOLS_RENDERINGTOOLS_H_ */

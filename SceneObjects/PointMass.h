@@ -14,6 +14,7 @@ class PointMass {
 public:
 	PointMass();
 	virtual ~PointMass();
+	PointMass(Vec3f, float);
 
 	Vec3f getCurrentForces() const;
 	void setCurrentForces(Vec3f);

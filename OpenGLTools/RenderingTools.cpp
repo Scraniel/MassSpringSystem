@@ -17,6 +17,24 @@ void RenderingTools::reloadMVPUniform(Renderable& toLoad)
 				GL_TRUE,	// transpose matrix, Mat4f is row major
 				toLoad.MVP.data()	// pointer to data in Mat4f
 			);
+
+	GLint mID = glGetUniformLocation( toLoad.basicProgramID, "M" );
+
+	glUseProgram( toLoad.basicProgramID );
+	glUniformMatrix4fv( 	mID,		// ID
+				1,		// only 1 matrix
+				GL_TRUE,	// transpose matrix, Mat4f is row major
+				toLoad.M.data()	// pointer to data in Mat4f
+			);
+
+	GLint vID = glGetUniformLocation( toLoad.basicProgramID, "V" );
+
+	glUseProgram( toLoad.basicProgramID );
+	glUniformMatrix4fv( 	vID,		// ID
+				1,		// only 1 matrix
+				GL_TRUE,	// transpose matrix, Mat4f is row major
+				IdentityMatrix().data()	// pointer to data in Mat4f
+	);
 }
 
 void RenderingTools::setupVAO(Renderable& toRender)
@@ -45,6 +63,11 @@ void RenderingTools::setupVAO(Renderable& toRender)
 		(void*)0	// array buffer offset
 	);
 
+	if(toRender.useIndexBuffer)
+	{
+		glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, toRender.indexBufferID);
+	}
+
 	glBindVertexArray( 0 ); // reset to default
 }
 
@@ -56,7 +79,7 @@ void RenderingTools::loadBuffer(Renderable& toLoad)
 	glBufferData(	GL_ARRAY_BUFFER,
 			sizeof(Vec3f)*toLoad.getVerts().size(),	// byte size of Vec3f, 4 of them
 			toLoad.getVerts().data(),		// pointer (Vec3f*) to contents of verts
-			GL_STATIC_DRAW );	// Usage pattern of GPU buffer
+			GL_DYNAMIC_DRAW );	// Usage pattern of GPU buffer
 
 	std::vector<float> colours = toLoad.getColours();
 
@@ -64,7 +87,20 @@ void RenderingTools::loadBuffer(Renderable& toLoad)
 	glBufferData(	GL_ARRAY_BUFFER,
 			sizeof(float)*colours.size(),
 			colours.data(),
-			GL_STATIC_DRAW );
+			GL_DYNAMIC_DRAW );
+}
+
+void RenderingTools::loadIndexBuffer(Renderable& toLoad)
+{
+	  // but this is only needed once here
+	  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, toLoad.indexBufferID);
+	  glBufferData(
+	      GL_ELEMENT_ARRAY_BUFFER,
+	      sizeof(int) *
+	          toLoad.getIndices().size(), // byte size of Vec3f, 4 of them
+	      toLoad.getIndices().data(),      // pointer (Vec3f*) to contents of verts
+	      GL_STATIC_DRAW);                  // Usage pattern of GPU buffer
+
 }
 
 

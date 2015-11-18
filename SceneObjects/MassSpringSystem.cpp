@@ -18,7 +18,7 @@ MassSpringSystem::~MassSpringSystem() {
 
 MassSpringSystem::MassSpringSystem(SpringSystem type)
 {
-	this->setRenderMode(GL_LINE_STRIP);
+
 	this->setFragmentShaderPath("Shaders/basic_fs.glsl");
 	this->setVertexShaderPath("Shaders/basic_vs.glsl");
 	this->setColour(Vec3f(1,1,1));
@@ -52,9 +52,7 @@ void MassSpringSystem::update()
 
 		Vec3f springForce = n * ((-current.getK()) * (startToEnd.length() - current.getRestLength()));
 
-		//springForce = springForce - ((n * ((startPoint.getVelocity() * n) - (endPoint.getVelocity() * n))) * MassSpringSystem::DAMPING_FORCE_CONST);
-
-
+		springForce = springForce + ((n * ((startPoint.getVelocity() * n) - (endPoint.getVelocity() * n))) * MassSpringSystem::DAMPING_FORCE_CONST);
 
 		startPoint.addForce(springForce * (-1.0));
 		endPoint.addForce(springForce );
@@ -79,6 +77,7 @@ void MassSpringSystem::update()
 		current.clearForces();
 
 	}
+
 }
 
 void MassSpringSystem::add(PointMass start, PointMass end, Spring spring)
@@ -114,8 +113,27 @@ void MassSpringSystem::add(PointMass newMass, Spring spring)
 	this->setVerts(newVerts);
 }
 
+// Replaces the current list of points / springs with these
+void MassSpringSystem::add(std::vector<PointMass> points, std::vector<Spring> springs)
+{
+	this->masses = points;
+	this->springs = springs;
+
+	std::vector<Vec3f> newPoints;
+	for(PointMass mass : masses)
+	{
+		newPoints.push_back(mass.getPosition());
+	}
+
+	this->setVerts(newPoints);
+}
+
+
+
 void MassSpringSystem::createOscillator()
 {
+	this->setRenderMode(GL_LINE_STRIP);
+
 	PointMass first, second;
 	first.setMass(1);
 	first.setPosition(Vec3f(0,0,0));
@@ -131,6 +149,8 @@ void MassSpringSystem::createOscillator()
 
 void MassSpringSystem::createRope()
 {
+	this->setRenderMode(GL_LINE_STRIP);
+
 	PointMass first, second;
 	first.setMass(1);
 	first.setPosition(Vec3f(0,0,0));
@@ -139,7 +159,7 @@ void MassSpringSystem::createRope()
 
 	Spring spring;
 	spring.setK(200);
-	spring.setRestLength(1);
+	spring.setRestLength(0.1);
 
 	add(first, second, spring);
 
@@ -155,8 +175,68 @@ void MassSpringSystem::createRope()
 
 void MassSpringSystem::createJello()
 {
+	this->useIndexBuffer = true;
+	this->useGeometryShader = true;
+	this->setRenderMode(GL_TRIANGLES);
+	this->setFragmentShaderPath("Shaders/phong_fs.glsl");
+	this->setVertexShaderPath("Shaders/phong_vs.glsl");
+	this->setGeometryShaderPath("Shaders/phong_gs.glsl");
+
+	PointMass topFrontLeft(Vec3f(-1,1,1), 1), topFrontRight(Vec3f(1,1,1), 1), topBackLeft(Vec3f(-1,1,-1), 1), topBackRight(Vec3f(1,1,-1), 1);
+	PointMass botFrontLeft(Vec3f(-1,-1,1), 1), botFrontRight(Vec3f(1,-1,1), 1), botBackLeft(Vec3f(-1,-1,-1), 1), botBackRight(Vec3f(1,-1,-1), 1);
+
+	std::vector<PointMass> pointList = {topFrontLeft, // 0
+										topFrontRight,// 1
+										topBackLeft,  // 2
+										topBackRight, // 3
+										botFrontLeft, // 4
+										botFrontRight,// 5
+										botBackLeft,  // 6
+										botBackRight};// 7
+	std::vector<Spring> springList;
+
+	for(int i = 0; i < pointList.size(); i++)
+	{
+		for(int j = i + 1; j < pointList.size(); j++)
+		{
+			Spring newSpring;
+			newSpring.setK(200);
+			newSpring.setEndPointIndex(j);
+			newSpring.setStartPointIndex(i);
+			newSpring.setRestLength((pointList[i].getPosition() - pointList[j].getPosition()).length());
+
+			springList.push_back(newSpring);
+		}
+	}
+
+	add(pointList, springList);
+
+	this->setIndices(indices);
+	calcNormals();
 
 }
+
+void MassSpringSystem::calcNormals()
+{
+	std::vector<Vec3f> pointList = this->getVerts();
+	this->normals.clear();
+
+	for(int i = 0; i < indices.size(); i += 3)
+		{
+			Vec3f n, firstToSecond, secondToThird;
+
+			firstToSecond = pointList[indices[i+1]] - pointList[indices[i]];
+			secondToThird = pointList[indices[i+2]] - pointList[indices[i+1]];
+
+			n = secondToThird.crossProduct(firstToSecond).normalized();
+			std::cout << n << std::endl;
+
+			this->normals.push_back(n);
+			this->normals.push_back(n);
+			this->normals.push_back(n);
+		}
+}
+
 
 void MassSpringSystem::createCloth()
 {

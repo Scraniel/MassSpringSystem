@@ -4,6 +4,7 @@ in vec3 light_worldspace;
 in vec3 normal_worldspace;
 in vec3 eye_worldspace;
 in vec3 reflect_worldspace;
+in vec3 colour;
 
 out vec3 color;
 
@@ -22,5 +23,5 @@ void main()
 	specular = pow(specular, 75);
 
 	
-	color = MaterialAmbientColor + clamp(dot(n, l),0.0,1.0) * vec3(1.0, 0.0, 0.0) + specular*vec3(0.4, 0.4, 0.4);
+	color = MaterialAmbientColor + clamp(dot(n, l),0.0,1.0) * colour + specular*vec3(0.4, 0.4, 0.4);
 }

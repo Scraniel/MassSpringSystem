@@ -16,6 +16,12 @@ PointMass::~PointMass() {
 	// TODO Auto-generated destructor stub
 }
 
+PointMass::PointMass(Vec3f position, float mass)
+{
+	this->position = position;
+	this->mass = mass;
+}
+
 Vec3f PointMass::getCurrentForces() const {
 		return currentForces;
 	}

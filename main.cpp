@@ -101,8 +101,19 @@ void displayFunc()
 		// Use VAO that holds buffer bindings
 		// and attribute config of buffers
 		glBindVertexArray( current.vaoID );
-		// Draw line segments, start at vertex 0, draw all verts in the object
-		glDrawArrays( current.getRenderMode(), 0, current.getVerts().size() );
+
+		if(current.useIndexBuffer)
+		{
+			glDrawElements(GL_TRIANGLES,               // mode
+			                 current.getIndices().size(), // count
+			                 GL_UNSIGNED_INT,            // type
+			                 (void *)0                   // element array buffer offset
+			                 );
+		}
+		else
+		{
+			glDrawArrays( current.getRenderMode(), 0, current.getVerts().size() );
+		}
 
 	}
 
@@ -114,6 +125,10 @@ void idleFunc()
 {
 	for(int i = 0 ; i < 10; i++)
 		currentlyRendering->update();
+
+	//M = M * RotateAboutYMatrix(1);
+	setupModelViewProjectionTransform();
+    reloadMVPUniformAllObjects();
 
 	glutPostRedisplay();
 }
@@ -171,8 +186,7 @@ void init()
 {
 	glEnable( GL_DEPTH_TEST );
 
-	currentlyRendering = &oscillator;
-
+	currentlyRendering = &jello;
 	toRender.push_back(currentlyRendering);
 
 	// SETUP SHADERS, BUFFERS, VAOs
@@ -188,8 +202,12 @@ void init()
 		current.generateIDs();
 		RenderingTools::setupVAO(current);
 		RenderingTools::loadBuffer(current);
+		if(current.useIndexBuffer)
+			RenderingTools::loadIndexBuffer(current);
 		RenderingTools::reloadMVPUniform(current);
 	}
+
+
 }
 
 void menu(int choice)
@@ -200,7 +218,7 @@ void menu(int choice)
 		currentlyRendering = &oscillator;
 		break;
 	case 1:
-		//currentlyRendering = &rope;
+		currentlyRendering = &rope;
 		break;
 	}
 
