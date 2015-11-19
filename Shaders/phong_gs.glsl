@@ -26,8 +26,8 @@ out VertexData
 void main()
 {
 	vec3 norm_modelSpace = cross(
-	(inVertex[2].position_worldSpace - inVertex[0].position_worldSpace),
-		(inVertex[1].position_worldSpace - inVertex[0].position_worldSpace)
+	(inVertex[1].position_worldSpace - inVertex[0].position_worldSpace),
+		(inVertex[2].position_worldSpace - inVertex[0].position_worldSpace)
 		);
 	
 	norm_modelSpace = normalize(norm_modelSpace);

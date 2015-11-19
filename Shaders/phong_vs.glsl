@@ -16,7 +16,7 @@ out VertexData
 
 void main()
 {
-	const vec3 light_worldSpace = vec3(10, 10, 10);
+	const vec3 light_worldSpace = vec3(10, 50, 50);
 	
 	gl_Position = MVP * vec4( vert_modelSpace, 1.0 );
 	

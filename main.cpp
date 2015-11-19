@@ -28,17 +28,22 @@
 #include "SceneObjects/Renderable.h"
 #include "SceneObjects/MassSpringSystem.h"
 
+
 using std::cout;
 using std::endl;
 using std::cerr;
 
-MassSpringSystem oscillator(MassSpringSystem::Oscillator), rope(MassSpringSystem::Rope), jello(MassSpringSystem::Jello), cloth(MassSpringSystem::Cloth);
-MassSpringSystem * currentlyRendering;
+MassSpringSystem systems [] = {MassSpringSystem(MassSpringSystem::Oscillator), MassSpringSystem(MassSpringSystem::Rope), MassSpringSystem(MassSpringSystem::Jello), MassSpringSystem(MassSpringSystem::Cloth)};
+int currentlyRendering;
 Mat4f MVP;
 Mat4f M; // Every model should have it's own Model matrix
 Mat4f V;
 Mat4f P;
 
+float thetaYRotate = 0;
+float thetaXRotate = 0;
+float mousePreviousX = 0;
+float mousePreviousY = 0;
 
 std::vector<Renderable*> toRender = {};
 
@@ -59,13 +64,26 @@ void reloadMVPUniformAllObjects();
 
 void mouseButtonFunc( int button, int state, int x, int y)
 {
-
+	if(button == GLUT_MIDDLE_BUTTON && state == GLUT_DOWN)
+		systems[currentlyRendering].addForce(Vec3f(0.,10000., 0.));
 }
 
 
 void mouseMotionFunc(int x, int y)
 {
 
+	thetaYRotate = ((x - mousePreviousX) / WIN_WIDTH) * 360; // May not be necessary
+	mousePreviousY = y;
+	mousePreviousX = x;
+
+	for(unsigned int i = 0; i < toRender.size(); i++)
+	{
+		Renderable & current = *toRender.at(i);
+		current.M = current.M * RotateAboutYMatrix( thetaYRotate );
+	}
+
+	setupModelViewProjectionTransform();
+	reloadMVPUniformAllObjects();
 }
 
 // Reloads the MVP uniform for all objects in the scene, and calls for a redisplay
@@ -104,6 +122,7 @@ void displayFunc()
 
 		if(current.useIndexBuffer)
 		{
+
 			glDrawElements(GL_TRIANGLES,               // mode
 			                 current.getIndices().size(), // count
 			                 GL_UNSIGNED_INT,            // type
@@ -124,7 +143,7 @@ void displayFunc()
 void idleFunc()
 {
 	for(int i = 0 ; i < 10; i++)
-		currentlyRendering->update();
+		systems[currentlyRendering].update();
 
 	//M = M * RotateAboutYMatrix(1);
 	setupModelViewProjectionTransform();
@@ -186,8 +205,8 @@ void init()
 {
 	glEnable( GL_DEPTH_TEST );
 
-	currentlyRendering = &jello;
-	toRender.push_back(currentlyRendering);
+	currentlyRendering = MassSpringSystem::Cloth;
+	toRender.push_back(&systems[currentlyRendering]);
 
 	// SETUP SHADERS, BUFFERS, VAOs
 
@@ -214,11 +233,11 @@ void menu(int choice)
 {
 	switch(choice)
 	{
-	case 0:
-		currentlyRendering = &oscillator;
+	case MassSpringSystem::Oscillator:
+		currentlyRendering = MassSpringSystem::Oscillator;
 		break;
 	case 1:
-		currentlyRendering = &rope;
+		currentlyRendering = MassSpringSystem::Oscillator;
 		break;
 	}
 

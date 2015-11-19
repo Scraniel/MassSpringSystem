@@ -28,9 +28,12 @@ public:
 	void clearForces();
 	void addVelocity(Vec3f);
 
+	bool applyForces = true;
+
 private:
 	Vec3f position, velocity, currentForces;
 	float mass;
+
 
 };
 

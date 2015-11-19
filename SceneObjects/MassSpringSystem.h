@@ -16,7 +16,7 @@ class MassSpringSystem : public Renderable {
 public:
 	enum SpringSystem
 		{
-			Oscillator,
+			Oscillator = 0,
 			Rope,
 			Jello,
 			Cloth
@@ -54,7 +54,9 @@ public:
 	static constexpr float DELTA_T = 0.001;
 	static constexpr float G = -9.81;
 	std::vector<PointMass> masses;
-	void calcNormals();
+	void addForce(Vec3f);
+
+	bool collide = false;
 
 private:
 	void createOscillator();
