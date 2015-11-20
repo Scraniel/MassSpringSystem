@@ -34,7 +34,8 @@ void main()
 		
 		
 		color = ambientColor + diffuseColor * 0.25 +
-		diffuseColor * cosTheta +
-		specularColor * pow( cosAlpha, 128);
+		diffuseColor * cosTheta;// +
+		//specularColor * pow( cosAlpha, 128);
+
 	}
 }

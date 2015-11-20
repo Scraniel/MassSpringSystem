@@ -50,20 +50,27 @@ public:
 	void add(PointMass, PointMass, Spring);
 	void add(PointMass, Spring);
 	void add(std::vector<PointMass>, std::vector<Spring>);
-	static constexpr float DAMPING_FORCE_CONST = 5;
+	static constexpr float DAMPING_FORCE_CONST = 0.5;
 	static constexpr float DELTA_T = 0.001;
 	static constexpr float G = -9.81;
 	std::vector<PointMass> masses;
 	void addForce(Vec3f);
+	void reset();
 
 	bool collide = false;
+	bool wind = false;
 
 private:
 	void createOscillator();
 	void createRope();
 	void createJello();
 	void createCloth();
+	Vec3f getWind();
 
+	int timeSteps = 0;
+
+	std::vector<Vec3f> defaultVertState;
+	std::vector<PointMass> defaultMassState;
 
 	std::vector<Spring> springs;
 };

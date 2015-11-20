@@ -29,6 +29,7 @@ public:
 	void addVelocity(Vec3f);
 
 	bool applyForces = true;
+	bool noSprings = false;
 
 private:
 	Vec3f position, velocity, currentForces;

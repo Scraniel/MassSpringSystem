@@ -91,11 +91,11 @@ void reloadMVPUniformAllObjects()
 {
 	setupModelViewProjectionTransform();
 	// For every object, setup VAO's / buffers
-	for(unsigned int i = 0; i < toRender.size(); i++)
-	{
-		Renderable & current = *toRender.at(i);
+	//for(unsigned int i = 0; i < toRender.size(); i++)
+	//{
+		Renderable & current = *toRender.at(currentlyRendering);
 		RenderingTools::reloadMVPUniform(current);
-	}
+	//}
 	glutPostRedisplay();
 }
 
@@ -108,9 +108,9 @@ void displayFunc()
 	//TODO: move this into renderable as an overridable
 	//		function so each child can render differently
 	//		(eg. pass in additional buffers)
-	for(unsigned int i = 0; i < toRender.size(); i++)
-	{
-		Renderable & current = *toRender.at(i);
+	//for(unsigned int i = 0; i < toRender.size(); i++)
+	//{
+		Renderable & current = *toRender.at(currentlyRendering);
 		RenderingTools::loadBuffer(current);
 
 		// Use our shader
@@ -134,7 +134,7 @@ void displayFunc()
 			glDrawArrays( current.getRenderMode(), 0, current.getVerts().size() );
 		}
 
-	}
+	//}
 
 	glutSwapBuffers();
 }
@@ -205,8 +205,12 @@ void init()
 {
 	glEnable( GL_DEPTH_TEST );
 
-	currentlyRendering = MassSpringSystem::Cloth;
-	toRender.push_back(&systems[currentlyRendering]);
+	currentlyRendering = MassSpringSystem::Oscillator;
+	toRender.push_back(&systems[MassSpringSystem::Oscillator]);
+	toRender.push_back(&systems[MassSpringSystem::Rope]);
+	toRender.push_back(&systems[MassSpringSystem::Jello]);
+	toRender.push_back(&systems[MassSpringSystem::Cloth]);
+
 
 	// SETUP SHADERS, BUFFERS, VAOs
 
@@ -231,16 +235,14 @@ void init()
 
 void menu(int choice)
 {
-	switch(choice)
-	{
-	case MassSpringSystem::Oscillator:
-		currentlyRendering = MassSpringSystem::Oscillator;
-		break;
-	case 1:
-		currentlyRendering = MassSpringSystem::Oscillator;
-		break;
+	if(choice == 4)
+		return;
+	if(choice == 5)
+		systems[currentlyRendering].wind = systems[currentlyRendering].wind^true;
+	else{
+		currentlyRendering = choice;
+		systems[currentlyRendering].reset();
 	}
-
 }
 
 
@@ -273,6 +275,10 @@ int main( int argc, char** argv )
     glutCreateMenu(menu);
     glutAddMenuEntry("Render Oscillator",0);
     glutAddMenuEntry("Render Rope",1);
+    glutAddMenuEntry("Render Jello", 2);
+    glutAddMenuEntry("Render Cloth", 3);
+    glutAddMenuEntry("-----------------",4);
+    glutAddMenuEntry("Toggle Wind", 5);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 	init(); // our own initialize stuff func

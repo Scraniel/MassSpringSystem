@@ -38,10 +38,19 @@ MassSpringSystem::MassSpringSystem(SpringSystem type)
 		createCloth();
 		break;
 	}
+
+	defaultVertState = this->getVerts();
+	defaultMassState = this->masses;
+}
+Vec3f MassSpringSystem::getWind()
+{
+	return Vec3f(std::sin(timeSteps),0,0) * 40 + Vec3f(40,0,0) + Vec3f(0,std::sin(timeSteps),0) * 40 ;
 }
 
 void MassSpringSystem::update()
 {
+	timeSteps = (timeSteps + 1) % 360;
+
 	// Accumulating spring forces
 	for(Spring current : springs)
 	{
@@ -66,13 +75,18 @@ void MassSpringSystem::update()
 		if( current.applyForces){
 
 			current.addForce(Vec3f(0, MassSpringSystem::G, 0) * current.getMass()); // THIS IS WHERE YOU ADD GLOBAL FORCES
+			if(wind)
+				current.addForce(getWind());
 
 			// Integration scheme (should wrap in a function pointer or something; right now only does semi-implicit Euler)
-			if(current.getPosition().y() > -3 || !this->collide) // TODO: create a wall or something, don't use this magic number
+			if(current.getPosition().y() <= -3 && this->collide) // TODO: create a wall or something, don't use this magic number
 			{
-				current.addVelocity((current.getCurrentForces() * (1.0 / current.getMass())) * MassSpringSystem::DELTA_T);
-				current.setPosition(current.getPosition() + (current.getVelocity() * MassSpringSystem::DELTA_T));
+				//current.addForce(Vec3f(0,current.getCurrentForces().y(),0));
+				current.addForce(Vec3f(0, 150, 0));
 			}
+
+			current.addVelocity((current.getCurrentForces() * (1.0 / current.getMass())) * MassSpringSystem::DELTA_T);
+			current.setPosition(current.getPosition() + (current.getVelocity() * MassSpringSystem::DELTA_T));
 
 			setVert(i, current.getPosition());
 		}
@@ -81,7 +95,6 @@ void MassSpringSystem::update()
 		current.clearForces();
 
 	}
-
 }
 
 void MassSpringSystem::add(PointMass start, PointMass end, Spring spring)
@@ -137,6 +150,7 @@ void MassSpringSystem::add(std::vector<PointMass> points, std::vector<Spring> sp
 void MassSpringSystem::createOscillator()
 {
 	this->setRenderMode(GL_LINE_STRIP);
+	this->M = TranslateMatrix(0, 2, 0);
 
 	PointMass first, second;
 	first.setMass(1);
@@ -155,6 +169,7 @@ void MassSpringSystem::createOscillator()
 void MassSpringSystem::createRope()
 {
 	this->setRenderMode(GL_LINE_STRIP);
+	this->M = TranslateMatrix(0, 3, 0);
 
 	PointMass first, second;
 	first.setMass(1);
@@ -177,22 +192,44 @@ void MassSpringSystem::createRope()
 
 		add(currentMass, spring);
 	}
+
 }
+
+int calc2DOffset(int col, int row, int width)
+{
+	return row * width + col;
+}
+
+int calc3DOffset(int depth, int col, int row, int width, int height)
+{
+	return depth * width * height + row * width + col;
+}
+
 
 void MassSpringSystem::createJello()
 {
 	this->useIndexBuffer = true;
 	this->useGeometryShader = true;
 	this->collide = true;
-	this->setRenderMode(GL_TRIANGLES);
+	this->setColour(Vec3f(0,1,0));
+	this->setRenderMode(GL_POINTS);
 	this->setFragmentShaderPath("Shaders/phong_fs.glsl");
 	this->setVertexShaderPath("Shaders/phong_vs.glsl");
 	this->setGeometryShaderPath("Shaders/phong_gs.glsl");
 
+	int depth = 10;
+	int width = 10;
+	int height = 10;
+
+	float dfactor = 1/(float)depth;
+	float wfactor = 1/(float)width;
+	float hfactor = 1/(float)height;
+	float maxDistance = 0.6/((float)width/10.);;
+
 	PointMass topFrontLeft(Vec3f(-1,1,1), 1), topFrontRight(Vec3f(1,1,1), 1), topBackLeft(Vec3f(-1,1,-1), 1), topBackRight(Vec3f(1,1,-1), 1);
 	PointMass botFrontLeft(Vec3f(-1,-1,1), 1), botFrontRight(Vec3f(1,-1,1), 1), botBackLeft(Vec3f(-1,-1,-1), 1), botBackRight(Vec3f(1,-1,-1), 1);
 
-	std::vector<PointMass> pointList = {topFrontLeft, // 0
+	std::vector<PointMass> pointList; /*= {topFrontLeft, // 0
 										topFrontRight,// 1
 										topBackLeft,  // 2
 										topBackRight, // 3
@@ -200,19 +237,105 @@ void MassSpringSystem::createJello()
 										botFrontRight,// 5
 										botBackLeft,  // 6
 										botBackRight};// 7
+									*/
 	std::vector<Spring> springList;
 
+	Vec3f topLeftToTopRight = topFrontRight.getPosition() - topFrontLeft.getPosition();
+	Vec3f topLeftToBotLeft = botFrontLeft.getPosition() - topFrontLeft.getPosition();
+	Vec3f topLeftToBackLeft = topBackLeft.getPosition() - topFrontLeft.getPosition();
+
+	// Points
+
+	for(int i = 0; i < depth; i++)
+	{
+		for(int j = 0; j < height; j++)
+		{
+			for(int k = 0; k < width; k++)
+			{
+				/* middle of the cube, would be nice if we could do something here to make calculations not necessary
+				if((k <= width/3 || k >= 2*width/3) && (j <= height/3 || j >= 2*height/3) && (i <= depth/3 || i >= 2*depth/3))
+					continue;
+				*/
+
+				Vec3f position = topFrontLeft.getPosition() + (topLeftToTopRight) * (k * wfactor)
+															+ (topLeftToBotLeft) * (j * hfactor)
+															+ (topLeftToBackLeft) * (i * dfactor);
+				pointList.push_back(PointMass(position, 1));
+			}
+		}
+	}
+
+	// adjacent springs
 	for(int i = 0; i < pointList.size(); i++)
 	{
 		for(int j = i + 1; j < pointList.size(); j++)
 		{
-			Spring newSpring;
-			newSpring.setK(100);
-			newSpring.setEndPointIndex(j);
-			newSpring.setStartPointIndex(i);
-			newSpring.setRestLength((pointList[i].getPosition() - pointList[j].getPosition()).length());
+			float distance = (pointList[i].getPosition() - pointList[j].getPosition()).length();
+			if(distance <= maxDistance)
+			{
+				Spring newSpring;
+				newSpring.setK(200);
+				newSpring.setEndPointIndex(j);
+				newSpring.setStartPointIndex(i);
+				newSpring.setRestLength(distance);
 
-			springList.push_back(newSpring);
+				springList.push_back(newSpring);
+			}
+		}
+	}
+
+	// indices for drawing triangles - Front/Back face
+	for(int face = 0; face < depth; face = face + depth -1){
+		for(int i = 0; i < height - 1; i++)
+		{
+			for(int j = 0; j < width - 1; j++)
+			{
+				// 6 points for 2 triangles = a square!
+
+				indices.push_back(calc3DOffset(face, j, i+1, width, height));
+				indices.push_back(calc3DOffset(face,j+1, i+1, width, height));
+				indices.push_back(calc3DOffset(face,j,i,width, height));
+
+				indices.push_back(calc3DOffset(face,j+1, i+1, width, height));
+				indices.push_back(calc3DOffset(face,j+1, i, width, height));
+				indices.push_back(calc3DOffset(face,j, i, width, height));
+			}
+		}
+	}
+
+	// indices for drawing triangles - Left/Right face
+	for(int face = 0; face < width; face = face + width -1)
+	{
+		for(int h = 0; h < height - 1; h++)
+		{
+			for(int d = depth -1; d > 0; d--)
+			{
+				indices.push_back(calc3DOffset(d, face, h, width, height));
+				indices.push_back(calc3DOffset(d,face, h+1, width, height));
+				indices.push_back(calc3DOffset(d-1,face,h+1,width, height));
+
+				indices.push_back(calc3DOffset(d,face, h, width, height));
+				indices.push_back(calc3DOffset(d-1,face, h+1, width, height));
+				indices.push_back(calc3DOffset(d-1,face, h, width, height));
+			}
+		}
+	}
+
+	// indices for drawing triangles - Left/Right face
+	for(int face = 0; face < height; face = face + height -1)
+	{
+		for(int d = depth -1; d > 0; d--)
+		{
+			for(int col = 0; col < width -1; col++)
+			{
+				indices.push_back(calc3DOffset(d, col, face, width, height));
+				indices.push_back(calc3DOffset(d-1,col, face, width, height));
+				indices.push_back(calc3DOffset(d-1,col+1,face,width, height));
+
+				indices.push_back(calc3DOffset(d,col, face, width, height));
+				indices.push_back(calc3DOffset(d-1,col+1, face, width, height));
+				indices.push_back(calc3DOffset(d,col+1, face, width, height));
+			}
 		}
 	}
 
@@ -222,23 +345,19 @@ void MassSpringSystem::createJello()
 
 }
 
-int calcOffset(int col, int row, int width)
-{
-	return row * width + col;
-}
-
 void MassSpringSystem::createCloth()
 {
 	this->useIndexBuffer = true;
 	this->useGeometryShader = true;
-
+	this->M = TranslateMatrix(0,0,4);
+	this->setColour(Vec3f(0,0,1));
 	this->setRenderMode(GL_TRIANGLES);
 	this->setFragmentShaderPath("Shaders/phong_fs.glsl");
 	this->setVertexShaderPath("Shaders/phong_vs.glsl");
 	this->setGeometryShaderPath("Shaders/phong_gs.glsl");
-	int width = 30;
-	int height = 30;
-	float maxDist = .5/3.;
+	int width = 50;
+	int height = 50;
+	float maxDist = .5/((float)width/10.);
 
 	PointMass topLeft(Vec3f(-1, 1, 1), 1), topRight(Vec3f(1,1,0), 1), botLeft(Vec3f(-1,-1, 0), 1);//, botRight(Vec3f(1,-1,0), 1);
 	topLeft.applyForces = false;
@@ -281,7 +400,7 @@ void MassSpringSystem::createCloth()
 			if(distance < maxDist)
 			{
 				Spring newSpring;
-				newSpring.setK(2000);
+				newSpring.setK(20000);
 				newSpring.setEndPointIndex(j);
 				newSpring.setStartPointIndex(i);
 				newSpring.setRestLength(distance);
@@ -293,19 +412,22 @@ void MassSpringSystem::createCloth()
 	}
 
 	// indices for drawing triangles
-
 	for(int i = 0; i < height - 1; i++)
 	{
 		for(int j = 0; j < width - 1; j++)
 		{
 			// 6 points for 2 triangles = a square!
-			indices.push_back(calcOffset(j,i,width));
-			indices.push_back(calcOffset(j+1, i+1, width));
-			indices.push_back(calcOffset(j, i+1, width));
 
-			indices.push_back(calcOffset(j, i, width));
-			indices.push_back(calcOffset(j+1, i, width));
-			indices.push_back(calcOffset(j+1, i+1, width));
+
+			indices.push_back(calc2DOffset(j, i+1, width));
+			indices.push_back(calc2DOffset(j+1, i+1, width));
+			indices.push_back(calc2DOffset(j,i,width));
+
+			indices.push_back(calc2DOffset(j+1, i+1, width));
+			indices.push_back(calc2DOffset(j+1, i, width));
+			indices.push_back(calc2DOffset(j, i, width));
+
+
 		}
 
 	}
@@ -321,6 +443,11 @@ void MassSpringSystem::addForce(Vec3f force)
 	{
 		masses[i].addForce(force);
 	}
+}
 
-
+void MassSpringSystem::reset()
+{
+	this->wind = false;
+	this->masses = defaultMassState;
+	this->setVerts(defaultVertState);
 }
